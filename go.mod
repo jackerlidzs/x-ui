@@ -24,4 +24,13 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gorm.io/driver/sqlite v1.1.4
 	gorm.io/gorm v1.21.9
+	
+	// New dependencies for improvements
+	github.com/go-redis/redis/v8 v8.11.5
+	github.com/go-playground/validator/v10 v10.14.0
+	github.com/prometheus/client_golang v1.15.1
+	github.com/gorilla/websocket v1.5.0
+	github.com/gin-contrib/cors v1.4.0
+	github.com/gin-contrib/gzip v0.0.6
+	golang.org/x/crypto v0.10.0
 )

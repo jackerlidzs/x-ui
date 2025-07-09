@@ -1,334 +1,650 @@
 <!DOCTYPE html>
-<html lang="en">
-{{template "head" .}}
-<style>
-    @media (min-width: 769px) {
-        .ant-layout-content {
-            margin: 24px 16px;
+<html lang="{{.I18n.localizeMessage "pages.index.title"}}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{.I18n.localizeMessage "pages.index.title"}} - X-UI</title>
+    
+    <!-- Modern CSS Framework -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js for modern charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --dark-bg: #1f2937;
+            --dark-surface: #374151;
+            --dark-text: #f9fafb;
         }
-    }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+        }
+        
+        .dark {
+            background-color: var(--dark-bg);
+            color: var(--dark-text);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .dark .card {
+            background: var(--dark-surface);
+            border: 1px solid #4b5563;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.15);
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+        
+        .metric-card.success {
+            background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+        }
+        
+        .metric-card.warning {
+            background: linear-gradient(135deg, var(--warning-color) 0%, #d97706 100%);
+        }
+        
+        .metric-card.danger {
+            background: linear-gradient(135deg, var(--danger-color) 0%, #dc2626 100%);
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-item {
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            margin: 4px 8px;
+        }
+        
+        .sidebar-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(4px);
+        }
+        
+        .sidebar-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn {
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .loading-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .notification {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: #e5e7eb;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+            transition: width 0.3s ease;
+        }
+        
+        .table-modern {
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .table-modern th {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+        
+        .dark .table-modern th {
+            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+        }
+        
+        .table-modern tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-online { background: var(--success-color); }
+        .status-offline { background: var(--danger-color); }
+        .status-warning { background: var(--warning-color); }
+        
+        .modal {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            animation: modalSlideIn 0.3s ease;
+        }
+        
+        .dark .modal-content {
+            background: var(--dark-surface);
+        }
+        
+        @keyframes modalSlideIn {
+            from { transform: scale(0.9) translateY(-20px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 transition-colors duration-300">
+    <!-- Theme Toggle -->
+    <div class="fixed top-4 right-4 z-50">
+        <button id="themeToggle" class="btn bg-white dark:bg-gray-800 p-3 rounded-full shadow-lg">
+            <i class="fas fa-moon dark:hidden"></i>
+            <i class="fas fa-sun hidden dark:inline"></i>
+        </button>
+    </div>
 
-    .ant-col-sm-24 {
-        margin-top: 10px;
-    }
-</style>
-<body>
-<a-layout id="app" v-cloak>
-    {{ template "commonSider" . }}
-    <a-layout id="content-layout">
-        <a-layout-content>
-            <a-spin :spinning="spinning" :delay="200" :tip="loadingTip"/>
-            <transition name="list" appear>
-                <a-row>
-                    <a-card hoverable>
-                        <a-row>
-                            <a-col :sm="24" :md="12">
-                                <a-row>
-                                    <a-col :span="12" style="text-align: center">
-                                        <a-progress type="dashboard" status="normal"
-                                                    :stroke-color="status.cpu.color"
-                                                    :percent="status.cpu.percent"></a-progress>
-                                        <div>CPU</div>
-                                    </a-col>
-                                    <a-col :span="12" style="text-align: center">
-                                        <a-progress type="dashboard" status="normal"
-                                                    :stroke-color="status.mem.color"
-                                                    :percent="status.mem.percent"></a-progress>
-                                        <div>
-                                            {{ i18n "pages.index.memory"}}: [[ sizeFormat(status.mem.current) ]] / [[ sizeFormat(status.mem.total) ]]
-                                        </div>
-                                    </a-col>
-                                </a-row>
-                            </a-col>
-                            <a-col :sm="24" :md="12">
-                                <a-row>
-                                    <a-col :span="12" style="text-align: center">
-                                        <a-progress type="dashboard" status="normal"
-                                                    :stroke-color="status.swap.color"
-                                                    :percent="status.swap.percent"></a-progress>
-                                        <div>
-                                            swap: [[ sizeFormat(status.swap.current) ]] / [[ sizeFormat(status.swap.total) ]]
-                                        </div>
-                                    </a-col>
-                                    <a-col :span="12" style="text-align: center">
-                                        <a-progress type="dashboard" status="normal"
-                                                    :stroke-color="status.disk.color"
-                                                    :percent="status.disk.percent"></a-progress>
-                                        <div>
-                                            {{ i18n "pages.index.hard"}}: [[ sizeFormat(status.disk.current) ]] / [[ sizeFormat(status.disk.total) ]]
-                                        </div>
-                                    </a-col>
-                                </a-row>
-                            </a-col>
-                        </a-row>
-                    </a-card>
-                </a-row>
-            </transition>
-            <transition name="list" appear>
-                <a-row>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            {{ i18n "pages.index.xrayStatus" }}:
-                            <a-tag :color="status.xray.color">[[ status.xray.state ]]</a-tag>
-                            <a-tooltip v-if="status.xray.state === State.Error">
-                                <template slot="title">
-                                    <p v-for="line in status.xray.errorMsg.split('\n')">[[ line ]]</p>
-                                </template>
-                                <a-icon type="question-circle" theme="filled"></a-icon>
-                            </a-tooltip>
-                            <a-tag color="green" @click="openSelectV2rayVersion">[[ status.xray.version ]]</a-tag>
-                            <a-tag color="blue" @click="openSelectV2rayVersion">{{ i18n "pages.index.xraySwitch"}}</a-tag>
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            {{ i18n "pages.index.operationHours" }}:
-                            <a-tag color="#87d068">[[ formatSecond(status.uptime) ]]</a-tag>
-                            <a-tooltip>
-                                <template slot="title">
-                                    {{ i18n "pages.index.operationHoursDesc" }}
-                                </template>
-                                <a-icon type="question-circle" theme="filled"></a-icon>
-                            </a-tooltip>
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            {{ i18n "pages.index.systemLoad" }}: [[ status.loads[0] ]] | [[ status.loads[1] ]] | [[ status.loads[2] ]]
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            tcp / udp {{ i18n "pages.index.connectionCount" }}: [[ status.tcpCount ]] / [[ status.udpCount ]]
-                            <a-tooltip>
-                                <template slot="title">
-                                    {{ i18n "pages.index.connectionCountDesc" }}
-                                </template>
-                                <a-icon type="question-circle" theme="filled"></a-icon>
-                            </a-tooltip>
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            <a-row>
-                                <a-col :span="12">
-                                    <a-icon type="arrow-up"></a-icon>
-                                    [[ sizeFormat(status.netIO.up) ]] / S
-                                    <a-tooltip>
-                                        <template slot="title">
-                                            {{ i18n "pages.index.upSpeed" }}
-                                        </template>
-                                        <a-icon type="question-circle" theme="filled"></a-icon>
-                                    </a-tooltip>
-                                </a-col>
-                                <a-col :span="12">
-                                    <a-icon type="arrow-down"></a-icon>
-                                    [[ sizeFormat(status.netIO.down) ]] / S
-                                    <a-tooltip>
-                                        <template slot="title">
-                                            {{ i18n "pages.index.downSpeed" }}
-                                        </template>
-                                        <a-icon type="question-circle" theme="filled"></a-icon>
-                                    </a-tooltip>
-                                </a-col>
-                            </a-row>
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            <a-row>
-                                <a-col :span="12">
-                                    <a-icon type="cloud-upload"></a-icon>
-                                    [[ sizeFormat(status.netTraffic.sent) ]]
-                                    <a-tooltip>
-                                        <template slot="title">
-                                            {{ i18n "pages.index.totalSent" }}
-                                        </template>
-                                        <a-icon type="question-circle" theme="filled"></a-icon>
-                                    </a-tooltip>
-                                </a-col>
-                                <a-col :span="12">
-                                    <a-icon type="cloud-download"></a-icon>
-                                    [[ sizeFormat(status.netTraffic.recv) ]]
-                                    <a-tooltip>
-                                        <template slot="title">
-                                            {{ i18n "pages.index.totalReceive" }}
-                                        </template>
-                                        <a-icon type="question-circle" theme="filled"></a-icon>
-                                    </a-tooltip>
-                                </a-col>
-                            </a-row>
-                        </a-card>
-                    </a-col>
-                </a-row>
-            </transition>
-        </a-layout-content>
-    </a-layout>
-    <a-modal id="version-modal" v-model="versionModal.visible" title='{{ i18n "pages.index.xraySwitch" }}'
-             :closable="true" @ok="() => versionModal.visible = false"
-             ok-text='{{ i18n "confirm" }}' cancel-text='{{ i18n "cancel"}}'>
-        <h2>{{ i18n "pages.index.xraySwitchClick"}}</h2>
-        <h2>{{ i18n "pages.index.xraySwitchClickDesk"}}</h2>
-        <template v-for="version, index in versionModal.versions">
-            <a-tag :color="index % 2 == 0 ? 'blue' : 'green'"
-                   style="margin: 10px" @click="switchV2rayVersion(version)">
-                [[ version ]]
-            </a-tag>
-        </template>
-    </a-modal>
-</a-layout>
-{{template "js" .}}
-<script>
+    <!-- Sidebar -->
+    <div class="fixed inset-y-0 left-0 w-64 sidebar text-white z-40" id="sidebar">
+        <div class="p-6">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-shield-alt text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold">X-UI Panel</h1>
+                    <p class="text-xs opacity-80">Advanced Management</p>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="mt-8">
+            <a href="#dashboard" class="sidebar-item active flex items-center px-6 py-3 text-white">
+                <i class="fas fa-tachometer-alt w-5"></i>
+                <span class="ml-3">{{.I18n.localizeMessage "menu.dashboard"}}</span>
+            </a>
+            <a href="#inbounds" class="sidebar-item flex items-center px-6 py-3 text-white">
+                <i class="fas fa-server w-5"></i>
+                <span class="ml-3">{{.I18n.localizeMessage "menu.inbounds"}}</span>
+            </a>
+            <a href="#clients" class="sidebar-item flex items-center px-6 py-3 text-white">
+                <i class="fas fa-users w-5"></i>
+                <span class="ml-3">{{.I18n.localizeMessage "menu.clients"}}</span>
+            </a>
+            <a href="#traffic" class="sidebar-item flex items-center px-6 py-3 text-white">
+                <i class="fas fa-chart-line w-5"></i>
+                <span class="ml-3">{{.I18n.localizeMessage "menu.traffic"}}</span>
+            </a>
+            <a href="#settings" class="sidebar-item flex items-center px-6 py-3 text-white">
+                <i class="fas fa-cog w-5"></i>
+                <span class="ml-3">{{.I18n.localizeMessage "menu.settings"}}</span>
+            </a>
+            <a href="#logs" class="sidebar-item flex items-center px-6 py-3 text-white">
+                <i class="fas fa-file-alt w-5"></i>
+                <span class="ml-3">{{.I18n.localizeMessage "menu.logs"}}</span>
+            </a>
+        </nav>
+        
+        <div class="absolute bottom-6 left-6 right-6">
+            <div class="bg-white bg-opacity-10 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm">XRay Status</span>
+                    <span class="status-indicator status-online"></span>
+                </div>
+                <div class="mt-2 text-xs opacity-80">Running since 2 hours</div>
+            </div>
+        </div>
+    </div>
 
-    const State = {
-        Running: "running",
-        Stop: "stop",
-        Error: "error",
-    }
-    Object.freeze(State);
+    <!-- Main Content -->
+    <div class="ml-64 min-h-screen">
+        <!-- Header -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
+            <div class="flex items-center justify-between px-6 py-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white" id="pageTitle">
+                        {{.I18n.localizeMessage "pages.index.title"}}
+                    </h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Welcome back to your control panel</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <!-- Search -->
+                    <div class="relative">
+                        <input type="text" placeholder="Search..." 
+                               class="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                    
+                    <!-- Notifications -->
+                    <button class="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                    </button>
+                    
+                    <!-- User Menu -->
+                    <div class="relative">
+                        <button class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                                A
+                            </div>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Admin</span>
+                            <i class="fas fa-chevron-down text-xs text-gray-400"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
 
-    class CurTotal {
+        <!-- Dashboard Content -->
+        <main class="p-6" id="mainContent">
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="card metric-card p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm opacity-90">Total Users</p>
+                            <p class="text-3xl font-bold mt-2" id="totalUsers">0</p>
+                            <div class="flex items-center mt-2 text-sm">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                <span>+12% from last month</span>
+                            </div>
+                        </div>
+                        <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-users text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
 
-        constructor(current, total) {
-            this.current = current;
-            this.total = total;
+                <div class="card metric-card success p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm opacity-90">Active Connections</p>
+                            <p class="text-3xl font-bold mt-2" id="activeConnections">0</p>
+                            <div class="flex items-center mt-2 text-sm">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                <span>+5% from yesterday</span>
+                            </div>
+                        </div>
+                        <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-wifi text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card metric-card warning p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm opacity-90">Total Traffic</p>
+                            <p class="text-3xl font-bold mt-2" id="totalTraffic">0 GB</p>
+                            <div class="flex items-center mt-2 text-sm">
+                                <i class="fas fa-arrow-down mr-1"></i>
+                                <span>-2% from last week</span>
+                            </div>
+                        </div>
+                        <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-chart-bar text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card metric-card danger p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm opacity-90">System Load</p>
+                            <p class="text-3xl font-bold mt-2" id="systemLoad">0%</p>
+                            <div class="flex items-center mt-2 text-sm">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                <span>Normal range</span>
+                            </div>
+                        </div>
+                        <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-microchip text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Traffic Overview</h3>
+                        <select class="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 bg-white dark:bg-gray-700 dark:text-white">
+                            <option>Last 7 days</option>
+                            <option>Last 30 days</option>
+                            <option>Last 3 months</option>
+                        </select>
+                    </div>
+                    <canvas id="trafficChart" height="300"></canvas>
+                </div>
+
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Protocol Usage</h3>
+                        <div class="flex space-x-2">
+                            <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full">Real-time</span>
+                        </div>
+                    </div>
+                    <canvas id="protocolChart" height="300"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity & Quick Actions -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Recent Inbounds -->
+                <div class="lg:col-span-2 card p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Inbounds</h3>
+                        <button class="btn bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 text-sm">
+                            <i class="fas fa-plus mr-2"></i>Add New
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="table-modern w-full">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-3 text-left">Status</th>
+                                    <th class="px-4 py-3 text-left">Port</th>
+                                    <th class="px-4 py-3 text-left">Protocol</th>
+                                    <th class="px-4 py-3 text-left">Traffic</th>
+                                    <th class="px-4 py-3 text-left">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inboundsTable">
+                                <!-- Dynamic content will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Quick Actions</h3>
+                    <div class="space-y-4">
+                        <button class="w-full btn bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-4 text-left">
+                            <div class="flex items-center">
+                                <i class="fas fa-server text-xl mr-3"></i>
+                                <div>
+                                    <div class="font-semibold">Add Inbound</div>
+                                    <div class="text-sm opacity-90">Create new proxy rule</div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <button class="w-full btn bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white p-4 text-left">
+                            <div class="flex items-center">
+                                <i class="fas fa-user-plus text-xl mr-3"></i>
+                                <div>
+                                    <div class="font-semibold">Add Client</div>
+                                    <div class="text-sm opacity-90">Create user account</div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <button class="w-full btn bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white p-4 text-left">
+                            <div class="flex items-center">
+                                <i class="fas fa-certificate text-xl mr-3"></i>
+                                <div>
+                                    <div class="font-semibold">SSL Certificate</div>
+                                    <div class="text-sm opacity-90">Manage certificates</div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <button class="w-full btn bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white p-4 text-left">
+                            <div class="flex items-center">
+                                <i class="fas fa-sync-alt text-xl mr-3"></i>
+                                <div>
+                                    <div class="font-semibold">Restart XRay</div>
+                                    <div class="text-sm opacity-90">Apply configuration</div>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notifications" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- JavaScript -->
+    <script>
+        // Theme Management
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark');
+            localStorage.setItem('theme', body.classList.contains('dark') ? 'dark' : 'light');
+        });
+        
+        // Load saved theme
+        if (localStorage.getItem('theme') === 'dark') {
+            body.classList.add('dark');
         }
 
-        get percent() {
-            if (this.total === 0) {
-                return 0;
-            }
-            return toFixed(this.current / this.total * 100, 2);
+        // Navigation
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+
+        // Notification System
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification p-4 rounded-lg text-white max-w-sm ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'}`;
+            notification.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            document.getElementById('notifications').appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
         }
 
-        get color() {
-            const percent = this.percent;
-            if (percent < 80) {
-                return '#67C23A';
-            } else if (percent < 90) {
-                return '#E6A23C';
-            } else {
-                return '#F56C6C';
-            }
-        }
-    }
-
-    class Status {
-        constructor(data) {
-            this.cpu = new CurTotal(0, 0);
-            this.disk = new CurTotal(0, 0);
-            this.loads = [0, 0, 0];
-            this.mem = new CurTotal(0, 0);
-            this.netIO = {up: 0, down: 0};
-            this.netTraffic = {sent: 0, recv: 0};
-            this.swap = new CurTotal(0, 0);
-            this.tcpCount = 0;
-            this.udpCount = 0;
-            this.uptime = 0;
-            this.xray = {state: State.Stop, errorMsg: "", version: "", color: ""};
-
-            if (data == null) {
-                return;
-            }
-            this.cpu = new CurTotal(data.cpu, 100);
-            this.disk = new CurTotal(data.disk.current, data.disk.total);
-            this.loads = data.loads.map(load => toFixed(load, 2));
-            this.mem = new CurTotal(data.mem.current, data.mem.total);
-            this.netIO = data.netIO;
-            this.netTraffic = data.netTraffic;
-            this.swap = new CurTotal(data.swap.current, data.swap.total);
-            this.tcpCount = data.tcpCount;
-            this.udpCount = data.udpCount;
-            this.uptime = data.uptime;
-            this.xray = data.xray;
-            switch (this.xray.state) {
-                case State.Running:
-                    this.xray.color = "green";
-                    break;
-                case State.Stop:
-                    this.xray.color = "orange";
-                    break;
-                case State.Error:
-                    this.xray.color = "red";
-                    break;
-                default:
-                    this.xray.color = "gray";
-            }
-        }
-    }
-
-    const versionModal = {
-        visible: false,
-        versions: [],
-        show(versions) {
-            this.visible = true;
-            this.versions = versions;
-        },
-        hide() {
-            this.visible = false;
-        },
-    };
-
-    const app = new Vue({
-        delimiters: ['[[', ']]'],
-        el: '#app',
-        data: {
-            siderDrawer,
-            status: new Status(),
-            versionModal,
-            spinning: false,
-            loadingTip: '{{ i18n "loading"}}',
-        },
-        methods: {
-            loading(spinning, tip = '{{ i18n "loading"}}') {
-                this.spinning = spinning;
-                this.loadingTip = tip;
-            },
-            async getStatus() {
-                const msg = await HttpUtil.post('/server/status');
-                if (msg.success) {
-                    this.setStatus(msg.obj);
-                }
-            },
-            setStatus(data) {
-                this.status = new Status(data);
-            },
-            async openSelectV2rayVersion() {
-                this.loading(true);
-                const msg = await HttpUtil.post('server/getXrayVersion');
-                this.loading(false);
-                if (!msg.success) {
-                    return;
-                }
-                versionModal.show(msg.obj);
-            },
-            switchV2rayVersion(version) {
-                this.$confirm({
-                    title: '{{ i18n "pages.index.xraySwitchVersionDialog"}}',
-                    content: '{{ i18n "pages.index.xraySwitchVersionDialogDesc"}}' + ` ${version}?`,
-                    okText: '{{ i18n "confirm"}}',
-                    cancelText: '{{ i18n "cancel"}}',
-                    onOk: async () => {
-                        versionModal.hide();
-                        this.loading(true, '{{ i18n "pages.index.dontRefreshh"}}');
-                        await HttpUtil.post(`/server/installXray/${version}`);
-                        this.loading(false);
+        // Chart initialization
+        function initCharts() {
+            // Traffic Chart
+            const trafficCtx = document.getElementById('trafficChart').getContext('2d');
+            new Chart(trafficCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Upload (GB)',
+                        data: [12, 19, 3, 5, 2, 3, 9],
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Download (GB)',
+                        data: [7, 11, 5, 8, 3, 7, 15],
+                        borderColor: 'rgb(16, 185, 129)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        }
                     },
-                });
-            },
-        },
-        async mounted() {
-            while (true) {
-                try {
-                    await this.getStatus();
-                } catch (e) {
-                    console.error(e);
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    }
                 }
-                await PromiseUtil.sleep(2000);
-            }
-        },
-    });
+            });
 
-</script>
+            // Protocol Chart
+            const protocolCtx = document.getElementById('protocolChart').getContext('2d');
+            new Chart(protocolCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['VMess', 'VLESS', 'Trojan', 'Shadowsocks'],
+                    datasets: [{
+                        data: [45, 30, 15, 10],
+                        backgroundColor: [
+                            'rgb(59, 130, 246)',
+                            'rgb(16, 185, 129)',
+                            'rgb(245, 158, 11)',
+                            'rgb(239, 68, 68)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+        }
+
+        // WebSocket for real-time updates
+        function initWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+            
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                updateDashboard(data);
+            };
+            
+            ws.onopen = function() {
+                console.log('WebSocket connected');
+                showNotification('Real-time updates connected', 'success');
+            };
+            
+            ws.onclose = function() {
+                console.log('WebSocket disconnected');
+                showNotification('Real-time updates disconnected', 'warning');
+                // Reconnect after 5 seconds
+                setTimeout(initWebSocket, 5000);
+            };
+        }
+
+        // Update dashboard with real-time data
+        function updateDashboard(data) {
+            if (data.totalUsers) {
+                document.getElementById('totalUsers').textContent = data.totalUsers;
+            }
+            if (data.activeConnections) {
+                document.getElementById('activeConnections').textContent = data.activeConnections;
+            }
+            if (data.totalTraffic) {
+                document.getElementById('totalTraffic').textContent = formatBytes(data.totalTraffic);
+            }
+            if (data.systemLoad) {
+                document.getElementById('systemLoad').textContent = data.systemLoad + '%';
+            }
+        }
+
+        // Utility functions
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            initWebSocket();
+            showNotification('Dashboard loaded successfully', 'success');
+        });
+    </script>
 </body>
 </html>

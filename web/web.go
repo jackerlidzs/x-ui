@@ -18,14 +18,18 @@ import (
 	"x-ui/util/common"
 	"x-ui/web/controller"
 	"x-ui/web/job"
+	"x-ui/web/middleware"
 	"x-ui/web/network"
 	"x-ui/web/service"
 
 	"github.com/BurntSushi/toml"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/robfig/cron/v3"
 	"golang.org/x/text/language"
 )
@@ -81,14 +85,17 @@ type Server struct {
 	httpServer *http.Server
 	listener   net.Listener
 
-	index  *controller.IndexController
-	server *controller.ServerController
-	xui    *controller.XUIController
-	api    *controller.APIController
+	index     *controller.IndexController
+	server    *controller.ServerController
+	xui       *controller.XUIController
+	api       *controller.APIController
+	websocket *controller.WebSocketController
 
 	xrayService    service.XrayService
 	settingService service.SettingService
 	inboundService service.InboundService
+	cacheService   *service.CacheService
+	metricsService *service.MetricsService
 
 	cron *cron.Cron
 
@@ -157,6 +164,10 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 
 	engine := gin.Default()
 
+	// Initialize services
+	s.cacheService = service.GetCacheService()
+	s.metricsService = service.GetMetricsService()
+
 	secret, err := s.settingService.GetSecret()
 	if err != nil {
 		return nil, err
@@ -167,6 +178,22 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 		return nil, err
 	}
 	assetsBasePath := basePath + "assets/"
+
+	// Security and performance middleware
+	engine.Use(gzip.Gzip(gzip.DefaultCompression))
+	engine.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"}, // Configure properly in production
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"*"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
+	// Request logging and metrics
+	engine.Use(middleware.RequestLogger())
+	engine.Use(middleware.GeneralRateLimit())
+	engine.Use(middleware.BruteForceProtection())
 
 	store := cookie.NewStore(secret)
 	engine.Use(sessions.Sessions("session", store))
@@ -204,10 +231,23 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 
 	g := engine.Group(basePath)
 
+	// Prometheus metrics endpoint
+	engine.GET("/metrics", gin.WrapH(promhttp.Handler()))
+
+	// Health check endpoint
+	engine.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status":    "healthy",
+			"timestamp": time.Now().Unix(),
+			"version":   config.GetVersion(),
+		})
+	})
+
 	s.index = controller.NewIndexController(g)
 	s.server = controller.NewServerController(g)
 	s.xui = controller.NewXUIController(g)
 	s.api = controller.NewAPIController(g)
+	s.websocket = controller.NewWebSocketController(g)
 
 	return engine, nil
 }
